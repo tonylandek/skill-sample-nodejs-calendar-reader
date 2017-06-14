@@ -14,10 +14,11 @@ var alexa;
 var APP_ID = undefined; 
 
 // URL to get the .ics from, in this instance we are getting from Stanford however this can be changed
-var URL = "http://events.stanford.edu/eventlist.ics";
+var URL = "calendar .ics file goes here";
 
 // Skills name 
-var skillName = "Events calendar:";
+var skillName = "Skill name:";
+
 
 // Message when the skill is first called
 var welcomeMessage = "You can ask for the events today. Search for events by date. or say help. What would you like? ";
@@ -82,38 +83,15 @@ var newSessionHandlers = {
         this.handler.state = states.SEARCHMODE;
         this.emit(':ask', skillName + " " + welcomeMessage, welcomeMessage);
     },
-    "searchIntent": function() 
-    {
-        this.handler.state = states.SEARCHMODE;
-        this.emitWithState("searchIntent");
-    },
-    'Unhandled': function () {
-        this.emit(':ask', HelpMessage, HelpMessage);
-    },
-};
-
-// Create a new handler with a SEARCH state
-var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
-    'AMAZON.YesIntent': function () {
-        output = welcomeMessage;
-        alexa.emit(':ask', output, welcomeMessage);
-    },
-
-    'AMAZON.NoIntent': function () {
-        this.emit(':tell', shutdownMessage);
-    },
-
-    'AMAZON.RepeatIntent': function () {
-        this.emit(':ask', output, HelpMessage);
-    },
-
-    'searchIntent': function () {
+        'searchIntent': function () {
         // Declare variables 
         var eventList = new Array();
         var slotValue = this.event.request.intent.slots.date.value;
         if (slotValue != undefined)
         {
             var parent = this;
+            
+            this.handler.state = states.SEARCHMODE;
 
             // Using the iCal library I pass the URL of where we want to get the data from.
             ical.fromURL(URL, {}, function (err, data) {
@@ -198,6 +176,30 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
         }
     },
 
+    'Unhandled': function () {
+        this.emit(':ask', HelpMessage, HelpMessage);
+    },
+};
+
+// Create a new handler with a SEARCH state
+var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
+    'AMAZON.YesIntent': function () {
+        output = welcomeMessage;
+        alexa.emit(':ask', output, welcomeMessage);
+    },
+
+    'AMAZON.NoIntent': function () {
+        this.emit(':tell', shutdownMessage);
+    },
+
+    'AMAZON.RepeatIntent': function () {
+        this.emit(':ask', output, HelpMessage);
+    },
+
+    'searchIntent': function () {
+        this.emit('searchIntent'); // Uses the handler in newSessionHandlers
+    },
+
     'AMAZON.HelpIntent': function () {
         output = HelpMessage;
         this.emit(':ask', output, output);
@@ -241,6 +243,10 @@ var descriptionHandlers = Alexa.CreateStateHandler(states.DESCRIPTION, {
         } else {
             this.emit(':tell', eventOutOfRange);
         }
+    },
+    
+     'searchIntent': function () {
+        this.emit('searchIntent'); // Uses the handler in newSessionHandlers
     },
 
     'AMAZON.HelpIntent': function () {
@@ -393,6 +399,3 @@ function getEventsBeweenDates(startDate, endDate, eventList) {
     console.log("FOUND " + data.length + " events between those times");
     return data;
 }
-
-
-
